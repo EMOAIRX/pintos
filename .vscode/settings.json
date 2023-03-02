@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "kbd.h": "c",
+        "stdint.h": "c",
+        "stddef.h": "c",
+        "shutdown.h": "c",
+        "serial.h": "c",
+        "input.h": "c",
+        "simple_shell.h": "c"
+    }
+}

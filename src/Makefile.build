@@ -22,6 +22,8 @@ threads_SRC += threads/synch.c		# Synchronization.
 threads_SRC += threads/palloc.c		# Page allocator.
 threads_SRC += threads/malloc.c		# Subpage allocator.
 
+# threads_SRC += threads/simple_shell.c		# kernel_shell.
+
 # Device driver code.
 devices_SRC  = devices/pit.c		# Programmable interrupt timer chip.
 devices_SRC += devices/timer.c		# Periodic timer device.
