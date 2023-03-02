@@ -22,6 +22,7 @@
 #include "threads/palloc.h"
 #include "threads/pte.h"
 #include "threads/thread.h"
+#include "threads/simple_shell.h"
 #ifdef USERPROG
 #include "userprog/process.h"
 #include "userprog/exception.h"
@@ -133,9 +134,10 @@ pintos_init (void)
     /* Run actions specified on kernel command line. */
     run_actions (argv);
   } else {
+    simple_shell();
+    // for(;;);
     // TODO: no command line passed to kernel. Run interactively 
   }
-
   /* Finish up. */
   shutdown ();
   thread_exit ();
