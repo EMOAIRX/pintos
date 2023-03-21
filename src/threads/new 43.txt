@@ -1,0 +1,156 @@
+      sketches[i][5] = new LayersHash<4>(
+        (mem_base + (i + 1) * mem_inc) / sizeof(LayersHash<4>::Bucket) , 4 , 30 , 2);
+      sketches[i][6] = new LayersHash<4>(
+        (mem_base + (i + 1) * mem_inc) / sizeof(LayersHash<4>::Bucket) , 4 , 30 , 3);
+      sketches[i][7] = new LayersHash<4>(
+        (mem_base + (i + 1) * mem_inc) / sizeof(LayersHash<4>::Bucket) , 4 , 30 , 4);
+      sketches[i][8] = new LayersHash<4>(
+        (mem_base + (i + 1) * mem_inc) / sizeof(LayersHash<4>::Bucket) , 4 , 30 , 5);
+      sketches[i][9] = new LayersHash<4>(
+        (mem_base + (i + 1) * mem_inc) / sizeof(LayersHash<4>::Bucket) , 4 , 30 , 6);
+      sketches[i][10] = new LayersHash<4>(
+        (mem_base + (i + 1) * mem_inc) / sizeof(LayersHash<4>::Bucket) , 4 , 30 , 7);
+      sketches[i][11] = new LayersHash<4>(
+        (mem_base + (i + 1) * mem_inc) / sizeof(LayersHash<4>::Bucket) , 4 , 30 , 8);
+      sketches[i][12] = new LayersHash<4>(
+        (mem_base + (i + 1) * mem_inc) / sizeof(LayersHash<4>::Bucket) , 4 , 30 , 9);
+		
+
+
+
+TOPK = 100
+Memory size: 20KB
+
+WavingSketch4:  ARE: 0.112875   CR: 0.762203    PR: 0.417409
+WavingSketch8:  ARE: 0.064531   CR: 0.780976    PR: 0.369012
+         USS:   ARE: 8.392051   CR: 0.105131    PR: 0.420000
+Layers <8,8> 30:        ARE: 0.744541   CR: 0.664581    PR: 0.660448
+ALL = 1310722;CNT = 484347
+Layers <8,8> 40:        ARE: 0.372543   CR: 0.659574    PR: 0.631138
+ALL = 1310722;CNT = 465604
+Layers <8,8> 50:        ARE: 0.513271   CR: 0.653317    PR: 0.608392
+ALL = 1310722;CNT = 451690
+Layers <8,8> 60:        ARE: 0.643521   CR: 0.660826    PR: 0.597285
+ALL = 1310722;CNT = 439317
+Layers <8,8> 70:        ARE: 0.611848   CR: 0.642053    PR: 0.538300
+ALL = 1310722;CNT = 424356
+Layers <8,8> 80:        ARE: 0.691724   CR: 0.679599    PR: 0.523121
+ALL = 1310722;CNT = 405487
+Layers <8,8> 90:        ARE: 0.543859   CR: 0.665832    PR: 0.449704
+ALL = 1310722;CNT = 392045
+Layers <8,8> 100:       ARE: 0.395866   CR: 0.657071    PR: 0.237772
+ALL = 1310722;CNT = 375291
+
+Memory size: 40KB
+
+WavingSketch4:  ARE: 0.018484   CR: 0.933667    PR: 0.702448
+WavingSketch8:  ARE: 0.011011   CR: 0.926158    PR: 0.866511
+         USS:   ARE: 3.948412   CR: 0.200250    PR: 0.400000
+Layers <8,8> 30:        ARE: 0.129534   CR: 0.878598    PR: 0.565217
+ALL = 1310722;CNT = 379574
+Layers <8,8> 40:        ARE: 0.114739   CR: 0.894869    PR: 0.547893
+ALL = 1310722;CNT = 346168
+Layers <8,8> 50:        ARE: 0.117245   CR: 0.892365    PR: 0.541793
+ALL = 1310722;CNT = 317357
+Layers <8,8> 60:        ARE: 0.116578   CR: 0.897372    PR: 0.514347
+ALL = 1310722;CNT = 285842
+Layers <8,8> 70:        ARE: 0.125033   CR: 0.907384    PR: 0.487231
+ALL = 1310722;CNT = 256276
+Layers <8,8> 80:        ARE: 0.113852   CR: 0.919900    PR: 0.453704
+ALL = 1310722;CNT = 224643
+Layers <8,8> 90:        ARE: 0.100408   CR: 0.883605    PR: 0.384113
+ALL = 1310722;CNT = 196908
+Layers <8,8> 100:       ARE: 0.094473   CR: 0.902378    PR: 0.164349
+ALL = 1310722;CNT = 166145
+
+Memory size: 60KB
+
+WavingSketch4:  ARE: 0.007962   CR: 0.978723    PR: 0.947879
+WavingSketch8:  ARE: 0.002132   CR: 0.981227    PR: 0.996188
+         USS:   ARE: 2.435262   CR: 0.261577    PR: 0.348333
+Layers <8,8> 30:        ARE: 0.054649   CR: 0.979975    PR: 0.505487
+ALL = 1310722;CNT = 296948
+Layers <8,8> 40:        ARE: 0.028340   CR: 0.982478    PR: 0.497781
+ALL = 1310722;CNT = 252732
+Layers <8,8> 50:        ARE: 0.018831   CR: 0.974969    PR: 0.487484
+ALL = 1310722;CNT = 207674
+Layers <8,8> 60:        ARE: 0.023934   CR: 0.982478    PR: 0.486369
+ALL = 1310722;CNT = 163348
+Layers <8,8> 70:        ARE: 0.015930   CR: 0.968711    PR: 0.472239
+ALL = 1310722;CNT = 120402
+Layers <8,8> 80:        ARE: 0.016961   CR: 0.976220    PR: 0.485679
+ALL = 1310722;CNT = 81415
+Layers <8,8> 90:        ARE: 0.019849   CR: 0.981227    PR: 0.712080
+ALL = 1310722;CNT = 50687
+Layers <8,8> 100:       ARE: 0.022341   CR: 0.971214    PR: 0.279740
+ALL = 1310722;CNT = 32719
+
+Memory size: 80KB
+
+WavingSketch4:  ARE: 0.001253   CR: 0.987484    PR: 0.981343
+WavingSketch8:  ARE: 0.001357   CR: 0.988736    PR: 1.000000
+         USS:   ARE: 2.115149   CR: 0.359199    PR: 0.358750
+Layers <8,8> 30:        ARE: 0.003223   CR: 0.992491    PR: 0.442522
+ALL = 1310722;CNT = 228470
+Layers <8,8> 40:        ARE: 0.006403   CR: 0.993742    PR: 0.442833
+ALL = 1310722;CNT = 168840
+Layers <8,8> 50:        ARE: 0.004419   CR: 0.997497    PR: 0.446499
+ALL = 1310722;CNT = 111976
+Layers <8,8> 60:        ARE: 0.004348   CR: 0.989987    PR: 0.966993
+ALL = 1310722;CNT = 64601
+Layers <8,8> 70:        ARE: 0.003828   CR: 0.992491    PR: 0.958888
+ALL = 1310722;CNT = 32453
+Layers <8,8> 80:        ARE: 0.003509   CR: 0.987484    PR: 0.943780
+ALL = 1310722;CNT = 14784
+Layers <8,8> 90:        ARE: 0.004547   CR: 0.991239    PR: 0.922002
+ALL = 1310722;CNT = 6866
+Layers <8,8> 100:       ARE: 0.004906   CR: 0.993742    PR: 0.701413
+ALL = 1310722;CNT = 3449
+
+Memory size: 100KB
+
+WavingSketch4:  ARE: 0.000992   CR: 0.998748    PR: 0.992537
+WavingSketch8:  ARE: 0.000303   CR: 0.996245    PR: 1.000000
+         USS:   ARE: 1.625623   CR: 0.444305    PR: 0.355000
+Layers <8,8> 30:        ARE: 0.001811   CR: 0.998748    PR: 0.391945
+ALL = 1310722;CNT = 166214
+Layers <8,8> 40:        ARE: 0.001264   CR: 0.994994    PR: 0.988806
+ALL = 1310722;CNT = 95730
+Layers <8,8> 50:        ARE: 0.001410   CR: 0.996245    PR: 0.993758
+ALL = 1310722;CNT = 44229
+Layers <8,8> 60:        ARE: 0.001740   CR: 0.994994    PR: 0.991272
+ALL = 1310722;CNT = 17247
+Layers <8,8> 70:        ARE: 0.002066   CR: 0.998748    PR: 0.982759
+ALL = 1310722;CNT = 7108
+Layers <8,8> 80:        ARE: 0.002047   CR: 0.996245    PR: 0.976687
+ALL = 1310722;CNT = 3078
+Layers <8,8> 90:        ARE: 0.001799   CR: 0.997497    PR: 0.985167
+ALL = 1310722;CNT = 729
+Layers <8,8> 100:       ARE: 0.001703   CR: 0.996245    PR: 0.966019
+ALL = 1310722;CNT = 113
+
+Memory size: 120KB
+
+WavingSketch4:  ARE: 0.000631   CR: 1.000000    PR: 1.000000
+WavingSketch8:  ARE: 0.000201   CR: 0.996245    PR: 1.000000
+         USS:   ARE: 1.200658   CR: 0.494368    PR: 0.329167
+Layers <8,8> 30:        ARE: 0.000899   CR: 0.998748    PR: 1.000000
+ALL = 1310722;CNT = 108740
+Layers <8,8> 40:        ARE: 0.000683   CR: 0.994994    PR: 0.996241
+ALL = 1310722;CNT = 43425
+Layers <8,8> 50:        ARE: 0.000851   CR: 0.997497    PR: 0.997497
+ALL = 1310722;CNT = 15176
+Layers <8,8> 60:        ARE: 0.000581   CR: 1.000000    PR: 0.997503
+ALL = 1310722;CNT = 4198
+Layers <8,8> 70:        ARE: 0.000720   CR: 0.996245    PR: 0.997494
+ALL = 1310722;CNT = 1219
+Layers <8,8> 80:        ARE: 0.000943   CR: 0.998748    PR: 0.993773
+ALL = 1310722;CNT = 386
+Layers <8,8> 90:        ARE: 0.000916   CR: 0.998748    PR: 0.992537
+ALL = 1310722;CNT = 130
+Layers <8,8> 100:       ARE: 0.000818   CR: 1.000000    PR: 0.980368
+ALL = 1310722;CNT = 56
+
+
+
+

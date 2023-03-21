@@ -4,6 +4,7 @@
 #include <list.h>
 #include <stdbool.h>
 
+
 /** A counting semaphore. */
 struct semaphore 
   {
@@ -17,12 +18,18 @@ bool sema_try_down (struct semaphore *);
 void sema_up (struct semaphore *);
 void sema_self_test (void);
 
+
 /** Lock. */
 struct lock 
   {
     struct thread *holder;      /**< Thread holding lock (for debugging). */
     struct semaphore semaphore; /**< Binary semaphore controlling access. */
+    struct list_elem elem;      /**< List element for list of locks held by a thread. */
+    //list of wating threads
   };
+
+//void re_calc_priority(thread)
+void donate_re_calc_priority(struct thread *t);
 
 void lock_init (struct lock *);
 void lock_acquire (struct lock *);
