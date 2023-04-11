@@ -6,6 +6,12 @@
         "shutdown.h": "c",
         "serial.h": "c",
         "input.h": "c",
-        "simple_shell.h": "c"
+        "simple_shell.h": "c",
+        "stdarg.h": "c",
+        "stdio.h": "c",
+        "interrupt.h": "c",
+        "*.inc": "c",
+        "file.h": "c",
+        "filesys.h": "c"
     }
 }

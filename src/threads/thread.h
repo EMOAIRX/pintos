@@ -4,6 +4,7 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+#include "threads/synch.h"
 
 /** States in a thread's life cycle. */
 enum thread_status
@@ -80,6 +81,27 @@ typedef int tid_t;
    only because they are mutually exclusive: only a thread in the
    ready state is on the run queue, whereas only a thread in the
    blocked state is on a semaphore wait list. */
+
+/**
+ * Child entry for parent thread to keep track of child threads.
+*/
+struct child_entry{
+    tid_t tid;             // Child's tid
+    struct thread *t;      // Child's thread
+    int exit_code;         // Child's exit code
+    bool is_alive;         // Child is alive or not
+    bool is_waiting_on;    // Child is waiting on or not
+    struct semaphore sema; // Semaphore to let parent wait on child
+    struct list_elem elem;
+};
+
+
+struct file_descriptor{
+    int fd;
+    struct file *file;
+    struct list_elem elem;
+};
+
 struct thread
   {
     /* Owned by thread.c. */
@@ -89,9 +111,21 @@ struct thread
     uint8_t *stack;                     /**< Saved stack pointer. */
     int priority;                       /**< Priority. */
     struct list_elem allelem;           /**< List element for all threads list. */
-
+    int exit_code;                      /**< Exit code of the thread. */
+    struct semaphore sema_exec;         /**< Semaphore for waiting on child. */
+    bool load_success;                  /**< Load success of the thread. */
+   /*file descriptor*/
+    struct list file_list;              /**< List of file descriptors. */
+    //exec_file
+    struct file* exec_file;
+    int max_fd;                         /**< Max file descriptor. */
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /**< List element. */
+
+    struct thread *parent;              /**< Parent thread. */
+    struct list child_list;               /**< List of children. */
+    struct child_entry *as_child;          /**< Child entry. */
+
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */

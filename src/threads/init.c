@@ -140,9 +140,7 @@ pintos_init (void)
   }
   /* Finish up. */
   shutdown ();
-  printf("????");
   thread_exit ();
-  printf("????");
 }
 
 /** Clear the "BSS", a segment that should be initialized to
