@@ -22,6 +22,7 @@
 #include "threads/palloc.h"
 #include "threads/pte.h"
 #include "threads/thread.h"
+#include "vm/frame.h"
 // #include "threads/simple_shell.h"
 #ifdef USERPROG
 #include "userprog/process.h"
@@ -115,6 +116,10 @@ pintos_init (void)
   exception_init ();
   syscall_init ();
 #endif
+#ifdef VM
+  frame_init ();
+  page_init ();
+#endif
 
   /* Start thread scheduler and enable interrupts. */
   thread_start ();
@@ -126,6 +131,10 @@ pintos_init (void)
   ide_init ();
   locate_block_devices ();
   filesys_init (format_filesys);
+#endif
+
+#ifdef VM
+  swap_init ();
 #endif
 
   printf ("Boot complete.\n");

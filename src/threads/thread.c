@@ -68,7 +68,7 @@ static struct thread *running_thread (void);
 static struct thread *next_thread_to_run (void);
 static void init_thread (struct thread *, const char *name, int priority);
 static bool is_thread (struct thread *) UNUSED;
-static void *alloc_frame (struct thread *, size_t size);
+static void *thread_alloc_frame (struct thread *, size_t size);
 static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
@@ -186,17 +186,17 @@ thread_create (const char *name, int priority,
   tid = t->tid = allocate_tid ();
 
   /* Stack frame for kernel_thread(). */
-  kf = alloc_frame (t, sizeof *kf);
+  kf = thread_alloc_frame (t, sizeof *kf);
   kf->eip = NULL;
   kf->function = function;
   kf->aux = aux;
 
   /* Stack frame for switch_entry(). */
-  ef = alloc_frame (t, sizeof *ef);
+  ef = thread_alloc_frame (t, sizeof *ef);
   ef->eip = (void (*) (void)) kernel_thread;
 
   /* Stack frame for switch_threads(). */
-  sf = alloc_frame (t, sizeof *sf);
+  sf = thread_alloc_frame (t, sizeof *sf);
   sf->eip = switch_entry;
   sf->ebp = 0;
 
@@ -289,18 +289,14 @@ thread_tid (void)
 
 
 static void output_all_threads_with_their_child(){
-  puts("");
-  puts("");
-  puts("OUTPUT ALL THREADS WITH THEIR CHILD");
-  printf("[%d]\n",thread_current()->tid);
   struct list_elem *e;
   struct thread *t;
   struct child_entry *child;
   for(e = list_begin(&all_list); e != list_end(&all_list); e = list_next(e)){
     t = list_entry(e, struct thread, allelem);
     if(t->parent != NULL)
-      printf("thread[%d] -> %d ]] ", t->tid,t->parent->tid);
-    else printf("thread[%d] -> ]]", t->tid);
+      printf("thread-[%d] -> %d ]] ", t->tid,t->parent->tid);
+    else printf("thread-[%d] -> ]]", t->tid);
     
     for(struct list_elem *e = list_begin(&t->child_list); 
                     e != list_end(&t->child_list); e = list_next(e)){
@@ -316,12 +312,17 @@ static void output_all_threads_with_their_child(){
 void
 thread_exit (void) 
 {
+
+  // puts("thread_exit");
+
   ASSERT (!intr_context ());
 
 #ifdef USERPROG
   process_exit ();
 #endif
   intr_disable ();
+
+  // puts("DISABLE");
 
   // output_all_threads_with_their_child();
   struct thread *cur = thread_current ();
@@ -539,7 +540,7 @@ init_thread (struct thread *t, const char *name, int priority)
 /** Allocates a SIZE-byte frame at the top of thread T's stack and
    returns a pointer to the frame's base. */
 static void *
-alloc_frame (struct thread *t, size_t size) 
+thread_alloc_frame (struct thread *t, size_t size) 
 {
   /* Stack data is always allocated in word-size units. */
   ASSERT (is_thread (t));

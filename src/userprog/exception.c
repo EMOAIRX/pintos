@@ -5,6 +5,8 @@
 #include "threads/interrupt.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
+#include "vm/page.h"
+
 
 /** Number of page faults processed. */
 static long long page_fault_cnt;
@@ -157,12 +159,39 @@ page_fault (struct intr_frame *f)
       return;
    }
 
-   void *ptr = pg_round_down(fault_addr);
-   if(ptr == NULL || !is_user_vaddr(ptr) || pagedir_get_page(thread_current()->pagedir, ptr) == NULL){
-      f -> eax = -1;
-      printf("%s: exit(%d)\n", thread_name(), -1);
-      thread_exit();
+
+#define STACK_MAX_SIZE (1 << 23)
+#define __PAGEFAULT_EXIT__(value) {f -> eax = (value); printf("%s: exit(%d)\n", thread_name(), -1); thread_exit();}
+
+   // printf("fault_addr : %p [%p -> %p]\n", fault_addr,pg_round_down(fault_addr), pg_round_down(fault_addr) + PGSIZE);
+   if(!not_present){
+      // puts("NOT_PRESENT");
+      __PAGEFAULT_EXIT__(-1);
    }
+   // printf("fault_addr = %p\n", fault_addr);
+
+   void *ptr = pg_round_down(fault_addr);
+   if(ptr == NULL || !is_user_vaddr(ptr)){
+      // printf("ptr == NULL || !is_user_vaddr(ptr)\n");
+      __PAGEFAULT_EXIT__(-1);
+   }
+#ifdef VM
+   struct suppl_pte *spte = get_spte(&thread_current()->sup_page_table, ptr);
+   //如果是不在内存中的文件类型
+   if(spte != NULL && !spte->is_loaded){
+      load_page(spte);
+      return ;
+   }
+   if(spte == NULL && fault_addr >= f->esp - 32 && PHYS_BASE - ptr <= STACK_MAX_SIZE){
+      // printf("grow_stack\n");
+      grow_stack(fault_addr);
+      return ;
+   }
+#endif
+   if(pagedir_get_page(thread_current()->pagedir, ptr) == NULL){
+      __PAGEFAULT_EXIT__(-1);
+   }
+
 
   /* To implement virtual memory, delete the rest of the function
      body, and replace it with code that brings in the page to

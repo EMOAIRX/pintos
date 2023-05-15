@@ -6,6 +6,8 @@
 #include "process.h"
 #include "devices/shutdown.h"
 #include "threads/vaddr.h"
+#include "userprog/pagedir.h"
+#include "vm/page.h"
 //filesys_create
 #include "filesys/filesys.h" 
 typedef int pid_t;
@@ -28,7 +30,7 @@ static void syscall_close(struct intr_frame *);
 static int get_user(const uint8_t *uaddr);
 static bool put_user(uint8_t *udst, uint8_t byte);
 static void* check_read_user_ptr(void *ptr, int size);
-static void* check_write_user_ptr(void *ptr, int size);
+static void* check_write_user_ptr(void *ptr, int size ,uint32_t*);
 static void* check_read_user_string(void *ptr);
 static void terminate_process();
 
@@ -79,6 +81,7 @@ syscall_handler (struct intr_frame *f UNUSED)
       printf("system call: unknown syscall number %d\n");
       break;
   }
+  // puts("END_SYSCALL");
 }
 
 static void syscall_halt(struct intr_frame *f UNUSED)
@@ -150,14 +153,11 @@ static void syscall_tell(struct intr_frame *f UNUSED){
 }
 
 
-static void syscall_read(struct intr_frame *f UNUSED)
-{
-  // printf("syscall_read\n");
+static void syscall_read(struct intr_frame *f UNUSED){
   int fd = *(int *)check_read_user_ptr(f->esp + 4, sizeof(int));
   const void *buffer = *(void **)check_read_user_ptr(f->esp + 8, sizeof(void **));
   unsigned size = *(unsigned *)check_read_user_ptr(f->esp + 12, sizeof(unsigned));
-  check_write_user_ptr(buffer, size);
-  // printf("syscall_read: fd = %d, buffer = %s, size = %d\n", fd, buffer, size);
+  check_write_user_ptr(buffer, size, f->esp);
   if(fd == 0){
     int i;
     for(i = 0; i < size; i++){
@@ -288,8 +288,21 @@ static void* check_read_user_ptr(void *ptr, int size){
     terminate_process();
   }
   // printf("--- 1\n");
+
+  struct thread *cur = thread_current();
   for (int i = 0; i < size; i++){
     if (get_user(ptr + i) == -1){
+#ifdef VM
+      if (pagedir_get_page(cur->pagedir,ptr + i) == NULL){
+        struct suppl_pte *spte;
+        spte = get_spte (&cur->sup_page_table, pg_round_down (ptr+i));
+        if (spte != NULL && !spte->is_loaded){
+          load_page (spte);
+          continue;
+        }
+      }
+#endif
+      // printf("[%d]I want to get(%p)\n", thread_current()->tid ,ptr + i);
       // printf("check_read_user_ptr: get_user failed\n");
       terminate_process();
     }
@@ -298,12 +311,28 @@ static void* check_read_user_ptr(void *ptr, int size){
   return ptr;
 }
 
-static void* check_write_user_ptr(void *ptr, int size){
+static void* check_write_user_ptr(void *ptr, int size,uint32_t* esp){
   if (!is_user_vaddr(ptr)){
     terminate_process();
   }
+  struct thread *cur = thread_current();
   for (int i = 0; i < size; i++){
     if (put_user(ptr + i, 0) == false){
+      //if is_load = false ...
+#ifdef VM
+      if (pagedir_get_page(cur->pagedir,ptr+i) == NULL){
+        struct suppl_pte *spte;
+        spte = get_spte (&cur->sup_page_table, pg_round_down (ptr+i));
+        if (spte != NULL && !spte->is_loaded){
+          load_page (spte);
+          continue;
+        }
+        if (spte == NULL && ptr+i >= (esp - 32)){
+          grow_stack (ptr+i);
+          continue;
+        }
+      }
+#endif
       terminate_process();
     }
   }

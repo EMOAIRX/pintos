@@ -1,5 +1,7 @@
 {
     "files.associations": {
         "stdint.h": "c"
-    }
+    },
+    "editor.suggest.snippetsPreventQuickSuggestions": false,
+    "aiXcoder.showTrayIcon": true
 }

@@ -5,6 +5,7 @@
 #include <list.h>
 #include <stdint.h>
 #include "threads/synch.h"
+#include "lib/kernel/hash.h"
 
 /** States in a thread's life cycle. */
 enum thread_status
@@ -125,7 +126,8 @@ struct thread
     struct thread *parent;              /**< Parent thread. */
     struct list child_list;               /**< List of children. */
     struct child_entry *as_child;          /**< Child entry. */
-
+    struct hash mmap_table;             /**< Memory mapped file table. */
+    struct hash sup_page_table;         /**< Supplemental page table. */
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
