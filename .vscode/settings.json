@@ -12,6 +12,19 @@
         "interrupt.h": "c",
         "*.inc": "c",
         "file.h": "c",
-        "filesys.h": "c"
-    }
+        "filesys.h": "c",
+        "load_page.h": "c",
+        "page.h": "c",
+        "functional": "c",
+        "*.tcc": "c",
+        "exception": "c",
+        "fstream": "c",
+        "iosfwd": "c",
+        "new": "c",
+        "ostream": "c",
+        "sstream": "c",
+        "streambuf": "c"
+    },
+    "editor.suggest.snippetsPreventQuickSuggestions": false,
+    "aiXcoder.showTrayIcon": true
 }

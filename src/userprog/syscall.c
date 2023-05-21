@@ -8,6 +8,7 @@
 #include "threads/vaddr.h"
 #include "userprog/pagedir.h"
 #include "vm/page.h"
+#include "vm/mmfile.h"
 //filesys_create
 #include "filesys/filesys.h" 
 typedef int pid_t;
@@ -26,6 +27,8 @@ static void syscall_read(struct intr_frame *);
 static void syscall_seek(struct intr_frame *);
 static void syscall_tell(struct intr_frame *);
 static void syscall_close(struct intr_frame *);
+static void syscall_mmap(struct intr_frame *);
+static void syscall_munmap(struct intr_frame *);
 
 static int get_user(const uint8_t *uaddr);
 static bool put_user(uint8_t *udst, uint8_t byte);
@@ -77,6 +80,8 @@ syscall_handler (struct intr_frame *f UNUSED)
     case SYS_SEEK: syscall_seek(f); break;
     case SYS_TELL: syscall_tell(f); break;
     case SYS_CLOSE: syscall_close(f); break;
+    case SYS_MMAP: syscall_mmap(f); break;
+    case SYS_MUNMAP: syscall_munmap(f); break;
     default:
       printf("system call: unknown syscall number %d\n");
       break;
@@ -158,6 +163,7 @@ static void syscall_read(struct intr_frame *f UNUSED){
   const void *buffer = *(void **)check_read_user_ptr(f->esp + 8, sizeof(void **));
   unsigned size = *(unsigned *)check_read_user_ptr(f->esp + 12, sizeof(unsigned));
   check_write_user_ptr(buffer, size, f->esp);
+//  printf("syscall_read(): fd = %d, buffer = %p, size = %d\n", fd, buffer, size);
   if(fd == 0){
     int i;
     for(i = 0; i < size; i++){
@@ -242,7 +248,7 @@ static void syscall_open(struct intr_frame *f UNUSED)
 static void syscall_remove(struct intr_frame *f UNUSED)
 {
   const char** pp = check_read_user_ptr(f->esp + 4, sizeof(char *));
-  const char* file = check_read_user_string(*pp);
+  const char* file = check_read_user_string((void*)*pp);
   lock_acquire(&filesys_lock);
   f->eax = filesys_remove(file);
   lock_release(&filesys_lock);
@@ -277,6 +283,72 @@ static void syscall_close(struct intr_frame *f UNUSED)
 
   list_remove(&fd->elem);
   free(fd);
+}
+
+
+
+
+static void main_syscall_mmap(struct intr_frame *f UNUSED)
+{
+  int fd = *(int *)check_read_user_ptr(f->esp + 4, sizeof(int));
+  void *addr = *(void **)check_read_user_ptr(f->esp + 8, sizeof(void **));
+  if (addr == NULL || pg_ofs(addr) != 0 || fd == 0 || fd == 1){
+    f->eax = -1;
+    return;
+  }
+  struct file_descriptor *filed = get_file_descriptor(fd);
+  if (filed == NULL){
+    f->eax = -1;
+    return;
+  }
+  struct file *file = filed->file;
+  if (file == NULL){
+    f->eax = -1;
+    return;
+  }
+  int file_len = file_length(file);
+  if (file_len == 0){
+    f->eax = -1;
+    return;
+  }
+  struct thread *cur = thread_current();
+  int offset = 0;
+  while (offset < file_len){
+    if (get_spte(&cur->sup_page_table, addr + offset) != NULL){
+      f->eax = -1;
+      return;
+    }
+    if (pagedir_get_page(cur->pagedir, addr + offset) != NULL){
+      f->eax = -1;
+      return;
+    }
+    offset += PGSIZE;
+  }
+  struct file* new_file = file_reopen(file);
+  f->eax = mmfile_insert(cur, new_file, addr, file_len);
+}
+
+static void syscall_mmap(struct intr_frame *f UNUSED){
+  // printf("syscall_mmap\n");
+  lock_acquire(&filesys_lock);
+  main_syscall_mmap(f);
+  lock_release(&filesys_lock);
+  // puts("ED");
+}
+static void syscall_munmap(struct intr_frame *f UNUSED)
+{
+  // printf("syscall_munmap\n");
+  lock_acquire(&filesys_lock);
+  int mapid = *(int *)check_read_user_ptr(f->esp + 4, sizeof(int));
+  struct thread *cur = thread_current();
+  struct mmfile *mmap_file = mmfile_find(&cur->mmap_file_table, mapid);
+  if (mmap_file == NULL){
+    lock_release(&filesys_lock);
+    return;
+  }
+  mmfile_remove(&cur->mmap_file_table, mmap_file);
+  lock_release(&filesys_lock);
+  // puts("ED_syscall_munmap");
 }
 
 /**

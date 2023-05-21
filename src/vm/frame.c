@@ -9,6 +9,8 @@
 #include "lib/string.h"
 #include "threads/malloc.h"
 #include "lib/kernel/list.h"
+#include "filesys/filesys.h"
+
 
 static struct list frame_table;
 int frame_table_size;
@@ -71,10 +73,23 @@ static struct frame_table_entry* find_frame_by_clock(){
     return NULL;//IMPOSSIBLE
 }
 
+static void write_back_to_file(struct file *file, off_t offset, void *kpage, uint32_t size){
+    printf("WRITE_BACK_TO_FILE\n");
+    lock_acquire(&filesys_lock);
+    file_seek(file, offset);
+    file_write(file, kpage, size);
+    lock_release(&filesys_lock);
+}
+
 static bool evict_frame(struct frame_table_entry *vf){
     struct thread *t = vf->owner;
     struct suppl_pte *spte = get_spte (&t->sup_page_table, vf->vaddr);
     ASSERT(spte != NULL);
+    // printf("[%d %d]\n",pagedir_is_dirty(t->pagedir, spte->vaddr), spte->type);
+    if(pagedir_is_dirty(t->pagedir, spte->vaddr) && spte->type == SPTE_TYPE_MMF){
+        write_back_to_file(spte->data.mmf_page.file, spte->data.mmf_page.ofs, 
+                                        vf->kaddr, spte->data.mmf_page.read_bytes);
+    } else
     if(pagedir_is_dirty(t->pagedir, spte->vaddr) || spte->type != SPTE_TYPE_FILE){
         size_t swap_index = swap_out(vf -> kaddr);
         if(swap_index == SWAP_ERROR) PANIC("SWAP OUT FAILED");

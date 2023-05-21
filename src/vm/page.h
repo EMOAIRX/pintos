@@ -12,13 +12,23 @@
 /* Data Definition */
 
 /* The lowest bit indicate whether the page has been swapped out */
-
-struct suppl_pte_data{
-  struct file * file;
+struct FILE_PAGE
+{
+  struct file *file;
   off_t ofs;
   uint32_t read_bytes;
   uint32_t zero_bytes;
   bool writable;
+};
+struct MMF_PAGE
+{
+  struct file *file;
+  off_t ofs;
+  uint32_t read_bytes;
+};
+union suppl_pte_data{
+  struct FILE_PAGE file_page;
+  struct MMF_PAGE mmf_page;
 };
 
 #define SPTE_TYPE_STACK 000
@@ -35,20 +45,13 @@ struct suppl_pte
 {
   int type;
   void *vaddr;   //user virtual address as the unique identifier of a page
-  struct suppl_pte_data data;
+  union suppl_pte_data data;
   bool is_loaded;
 
   /* reserved for possible swapping */
   size_t swap_index;
   bool swap_writable;
 
-  struct hash_elem elem;
-};
-
-struct mmap_file
-{
-  int mapid;
-  struct file *file;
   struct hash_elem elem;
 };
 
@@ -60,8 +63,6 @@ bool mmap_less(const struct hash_elem *, const struct hash_elem *, void *);
 /* Initialization of the supplemental page table management provided */
 void page_init(void);
 
-
-
 void free_spt(struct hash *);
 
 void free_mmap(struct hash *);
@@ -71,6 +72,9 @@ void free_mmap(struct hash *);
  * supplemental page table */
 bool spt_insert_file ( struct file *, off_t, uint8_t *, 
 			    uint32_t, uint32_t, bool);
+
+
+void free_spt_entry(struct suppl_pte *spte);
 
 bool spt_insert_stack (void *);
 

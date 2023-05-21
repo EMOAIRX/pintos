@@ -84,7 +84,7 @@ start_process (void *filename_)
   bool success;
 #ifdef VM
   hash_init (&thread_current()->sup_page_table, spt_hash, spt_less, NULL);
-  hash_init (&thread_current()->mmap_table, mmap_hash, mmap_less, NULL);
+  hash_init (&thread_current()->mmap_file_table, mmap_hash, mmap_less, NULL);
 #endif
 
   /* Initialize interrupt frame and load executable. */
@@ -220,6 +220,7 @@ process_exit (void)
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
 #ifdef VM
+  free_mmap(&cur->mmap_file_table);
   free_spt(&cur->sup_page_table);
 #endif
   // puts("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~PROCESS_FREE_SPT_END");
@@ -241,7 +242,6 @@ process_exit (void)
 
   // printf("FREE_SPT\n");   
 #ifdef VM 
-  free_mmap(&cur->mmap_table);
 #endif
   // puts("END_FREE_SPT");
 

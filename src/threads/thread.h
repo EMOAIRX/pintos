@@ -18,6 +18,7 @@ enum thread_status
 
 /** Thread identifier type.
    You can redefine this to whatever type you like. */
+typedef int mapid_t;
 typedef int tid_t;
 #define TID_ERROR ((tid_t) -1)          /**< Error value for tid_t. */
 
@@ -119,15 +120,18 @@ struct thread
     struct list file_list;              /**< List of file descriptors. */
     //exec_file
     struct file* exec_file;
-    int max_fd;                         /**< Max file descriptor. */
+    mapid_t max_fd;                         /**< Max file descriptor. */
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /**< List element. */
 
     struct thread *parent;              /**< Parent thread. */
     struct list child_list;               /**< List of children. */
     struct child_entry *as_child;          /**< Child entry. */
-    struct hash mmap_table;             /**< Memory mapped file table. */
+    struct hash mmap_file_table;             /**< Memory mapped file table. */
     struct hash sup_page_table;         /**< Supplemental page table. */
+// #ifdef VM
+    int max_mapid;                      /**< Max mapid. */
+// #endif
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */

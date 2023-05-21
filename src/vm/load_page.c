@@ -21,12 +21,12 @@ install_page (void *upage, void *kpage, bool writable)
 
 bool load_file(struct suppl_pte *spte){
     struct thread *t = thread_current();
-    struct file *file = spte->data.file;
-    off_t ofs = spte->data.ofs;
+    struct file *file = spte->data.file_page.file;
+    off_t ofs = spte->data.file_page.ofs;
     void *upage = spte->vaddr;
-    uint32_t read_bytes = spte->data.read_bytes;
-    uint32_t zero_bytes = spte->data.zero_bytes;
-    bool writable = spte->data.writable;
+    uint32_t read_bytes = spte->data.file_page.read_bytes;
+    uint32_t zero_bytes = spte->data.file_page.zero_bytes;
+    bool writable = spte->data.file_page.writable;
     // printf("TRY to ALLOC");
     void *kpage = alloc_frame(PAL_USER);
     // printf("ALLOCED, kpage = %p\n", kpage);
@@ -40,6 +40,36 @@ bool load_file(struct suppl_pte *spte){
     memset(kpage + read_bytes, 0, zero_bytes);
     // puts("TRY TO INSTALL");
     if(!install_page(upage, kpage, writable)){
+        free_frame(kpage);
+        PANIC("INSTALL FAILED");
+    }
+    // puts("INSTALLED\n");
+    spte -> is_loaded = true;
+    return true;
+}
+
+bool load_mmap(struct suppl_pte *spte){
+    struct thread *t = thread_current();
+    struct file *file = spte->data.mmf_page.file;
+    off_t ofs = spte->data.mmf_page.ofs;
+    void *upage = spte->vaddr;
+    uint32_t read_bytes = spte->data.mmf_page.read_bytes;
+    // printf("TRY to ALLOC");
+    void *kpage = alloc_frame(PAL_USER);
+    // printf("ALLOCED, kpage = %p\n", kpage);
+    if(kpage == NULL){
+        PANIC("FULL");
+    }
+    // printf("file_read_at(%p, %p, %d, %d)\n", file, kpage, read_bytes, ofs);
+    // printf("[%d]\n",file_read_at(file, kpage, read_bytes, ofs));
+    int tr;
+    if((tr = file_read_at(file, kpage, read_bytes, ofs)) != (int) read_bytes){
+        printf("t = %d\n",tr);
+        free_frame(kpage);
+        PANIC("READ FAILED");
+    }
+    // puts("TRY TO INSTALL");
+    if(!install_page(upage, kpage, true)){
         free_frame(kpage);
         PANIC("INSTALL FAILED");
     }
@@ -71,6 +101,7 @@ bool load_swap(struct suppl_pte *spte){
     return true;
 }
 
+
 bool load_page(struct suppl_pte * spte){
     // printf("LOADING");
     // printf("[LOAD_PAGE] vaddr = %p\n", spte->vaddr);
@@ -83,8 +114,13 @@ bool load_page(struct suppl_pte * spte){
         // puts("LOADFILE");
             load_file(spte);
             break;
+        case SPTE_TYPE_MMF:
+            load_mmap(spte);
+            break;
+
         case SPTE_TYPE_SWAP:  //perhaps STACK
         case SPTE_TYPE_FILE | SPTE_TYPE_SWAP:   //some file that comes into stacks
+        case SPTE_TYPE_MMF  | SPTE_TYPE_SWAP:
         // puts("LOAD_SWAP");
             load_swap(spte);
             break;

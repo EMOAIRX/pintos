@@ -524,6 +524,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
   t->exit_code = -1; 
+  t->max_mapid = 0;
     //-1 means not called exit(...) but terminated by other reason
   t->magic = THREAD_MAGIC;
   sema_init (&t->sema_exec, 0);
