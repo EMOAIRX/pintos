@@ -23,6 +23,8 @@ threads_SRC += threads/palloc.c		# Page allocator.
 threads_SRC += threads/malloc.c		# Subpage allocator.
 threads_SRC += threads/simple_shell.c		# simple_kernel_shell.
 
+# threads_SRC += threads/simple_shell.c		# kernel_shell.
+
 # Device driver code.
 devices_SRC  = devices/pit.c		# Programmable interrupt timer chip.
 devices_SRC += devices/timer.c		# Periodic timer device.
@@ -62,8 +64,12 @@ userprog_SRC += userprog/syscall.c	# System call handler.
 userprog_SRC += userprog/gdt.c		# GDT initialization.
 userprog_SRC += userprog/tss.c		# TSS management.
 
-# No virtual memory code yet.
-#vm_SRC = vm/file.c			# Some file.
+# virtual memory code.
+vm_SRC  = vm/frame.c					# Frame Table
+vm_SRC += vm/page.c                     # Supplemental Page Table
+vm_SRC += vm/swap.c                     # Swap Table
+vm_SRC += vm/mmfile.c
+vm_SRC += vm/load_page.c 			  # Page Loading
 
 # Filesystem code.
 filesys_SRC  = filesys/filesys.c	# Filesystem core.

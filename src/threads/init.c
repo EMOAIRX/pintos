@@ -22,7 +22,9 @@
 #include "threads/palloc.h"
 #include "threads/pte.h"
 #include "threads/thread.h"
-#include "threads/simple_shell.h"
+#include "vm/frame.h"
+// #include "threads/simple_shell.h"
+
 #ifdef USERPROG
 #include "userprog/process.h"
 #include "userprog/exception.h"
@@ -115,6 +117,10 @@ pintos_init (void)
   exception_init ();
   syscall_init ();
 #endif
+#ifdef VM
+  frame_init ();
+  page_init ();
+#endif
 
   /* Start thread scheduler and enable interrupts. */
   thread_start ();
@@ -128,13 +134,18 @@ pintos_init (void)
   filesys_init (format_filesys);
 #endif
 
+#ifdef VM
+  swap_init ();
+#endif
+
   printf ("Boot complete.\n");
   
   if (*argv != NULL) {
     /* Run actions specified on kernel command line. */
     run_actions (argv);
   } else {
-    simple_shell();
+    // simple_shell();
+
     // for(;;);
     // TODO: no command line passed to kernel. Run interactively 
   }

@@ -133,11 +133,14 @@ block_read (struct block *block, block_sector_t sector, void *buffer)
 void
 block_write (struct block *block, block_sector_t sector, const void *buffer)
 {
+  // printf("[write](%p) %u\n", block, sector);
   check_sector (block, sector);
   ASSERT (block->type != BLOCK_FOREIGN);
   block->ops->write (block->aux, sector, buffer);
   block->write_cnt++;
+  // printf("end_write\n");
 }
+
 
 /** Returns the number of sectors in BLOCK. */
 block_sector_t

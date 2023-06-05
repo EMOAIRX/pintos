@@ -4,7 +4,9 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
-#include "threads/fixed-point.h"
+#include "threads/synch.h"
+#include "lib/kernel/hash.h"
+
 
 /** States in a thread's life cycle. */
 enum thread_status
@@ -17,6 +19,7 @@ enum thread_status
 
 /** Thread identifier type.
    You can redefine this to whatever type you like. */
+typedef int mapid_t;
 typedef int tid_t;
 #define TID_ERROR ((tid_t) -1)          /**< Error value for tid_t. */
 
@@ -81,6 +84,27 @@ typedef int tid_t;
    only because they are mutually exclusive: only a thread in the
    ready state is on the run queue, whereas only a thread in the
    blocked state is on a semaphore wait list. */
+
+/**
+ * Child entry for parent thread to keep track of child threads.
+*/
+struct child_entry{
+    tid_t tid;             // Child's tid
+    struct thread *t;      // Child's thread
+    int exit_code;         // Child's exit code
+    bool is_alive;         // Child is alive or not
+    bool is_waiting_on;    // Child is waiting on or not
+    struct semaphore sema; // Semaphore to let parent wait on child
+    struct list_elem elem;
+};
+
+
+struct file_descriptor{
+    int fd;
+    struct file *file;
+    struct list_elem elem;
+};
+
 struct thread
   {
     /* Owned by thread.c. */
@@ -92,12 +116,30 @@ struct thread
     int nice;                           /**< Nice value. */
     fixed_t recent_cpu;                 /**< Recent cpu. */
     struct list_elem allelem;           /**< List element for all threads list. */
+    int exit_code;                      /**< Exit code of the thread. */
+    struct semaphore sema_exec;         /**< Semaphore for waiting on child. */
+    bool load_success;                  /**< Load success of the thread. */
+   /*file descriptor*/
+    struct list file_list;              /**< List of file descriptors. */
+    //exec_file
+    struct file* exec_file;
+    mapid_t max_fd;                         /**< Max file descriptor. */
+
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /**< List element. */
     struct lock *waiting_lock;          /**< Lock waiting for. */
     int64_t trigger_time;              /**< Trigger time for sleep. */
     struct list_elem trigger_wating_elem; /**< List element for trigger time. */
    struct list holding_locks;           /**< List of locks holding. */
+
+    struct thread *parent;              /**< Parent thread. */
+    struct list child_list;               /**< List of children. */
+    struct child_entry *as_child;          /**< Child entry. */
+    struct hash mmap_file_table;             /**< Memory mapped file table. */
+    struct hash sup_page_table;         /**< Supplemental page table. */
+// #ifdef VM
+    int max_mapid;                      /**< Max mapid. */
+// #endif
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */

@@ -16,6 +16,8 @@
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
+#include "filesys/filesys.h"
+#include "filesys/file.h"
 
 /** Random value for struct thread's `magic' member.
    Used to detect stack overflow.  See the big comment at the top
@@ -81,7 +83,7 @@ static struct thread *running_thread (void);
 static struct thread *next_thread_to_run (void);
 static void init_thread (struct thread *, const char *name, int priority);
 static bool is_thread (struct thread *) UNUSED;
-static void *alloc_frame (struct thread *, size_t size);
+static void *thread_alloc_frame (struct thread *, size_t size);
 static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
@@ -258,27 +260,30 @@ thread_create (const char *name, int priority,
   tid = t->tid = allocate_tid ();
 
   /* Stack frame for kernel_thread(). */
-  kf = alloc_frame (t, sizeof *kf);
+  kf = thread_alloc_frame (t, sizeof *kf);
   kf->eip = NULL;
   kf->function = function;
   kf->aux = aux;
 
   /* Stack frame for switch_entry(). */
-  ef = alloc_frame (t, sizeof *ef);
+  ef = thread_alloc_frame (t, sizeof *ef);
   ef->eip = (void (*) (void)) kernel_thread;
 
   /* Stack frame for switch_threads(). */
-  sf = alloc_frame (t, sizeof *sf);
+  sf = thread_alloc_frame (t, sizeof *sf);
   sf->eip = switch_entry;
   sf->ebp = 0;
 
-  if (thread_mlfqs) {
-    update_recent_cpu(t , NULL);
-    calculate_advanced_priority(t , NULL);
-    update_recent_cpu(thread_current() , NULL);
-    calculate_advanced_priority(thread_current() , NULL);
-    list_sort(&ready_list, priority_greater, NULL);
-  }
+  t->as_child = (struct child_entry *)malloc(sizeof(struct child_entry));
+  t->as_child->tid = tid;
+  t->as_child->t = t;
+  t->as_child->exit_code = -1;
+  t->as_child->is_alive = true;
+  t->as_child->is_waiting_on = false;
+  sema_init(&t->as_child->sema, 0);
+  t->parent = thread_current();
+  list_push_back(&t->parent->child_list, &t->as_child->elem);
+
 
   /* Add to run queue. */
   thread_unblock (t);
@@ -383,21 +388,70 @@ thread_tid (void)
   return thread_current ()->tid;
 }
 
+
+static void output_all_threads_with_their_child(){
+  struct list_elem *e;
+  struct thread *t;
+  struct child_entry *child;
+  for(e = list_begin(&all_list); e != list_end(&all_list); e = list_next(e)){
+    t = list_entry(e, struct thread, allelem);
+    if(t->parent != NULL)
+      printf("thread-[%d] -> %d ]] ", t->tid,t->parent->tid);
+    else printf("thread-[%d] -> ]]", t->tid);
+    
+    for(struct list_elem *e = list_begin(&t->child_list); 
+                    e != list_end(&t->child_list); e = list_next(e)){
+      child = list_entry(e, struct child_entry, elem);
+      printf("child[%d] ", child->tid);
+    }puts("");
+  }
+  puts("END");
+}
+
 /** Deschedules the current thread and destroys it.  Never
    returns to the caller. */
 void
 thread_exit (void) 
 {
+
+  // puts("thread_exit");
+
   ASSERT (!intr_context ());
 
 #ifdef USERPROG
   process_exit ();
 #endif
-
-  /* Remove thread from all threads list, set our status to dying,
-     and schedule another process.  That process will destroy us
-     when it calls thread_schedule_tail(). */
   intr_disable ();
+
+  // puts("DISABLE");
+
+  // output_all_threads_with_their_child();
+  struct thread *cur = thread_current ();
+  struct thread *parent = cur->parent;
+  struct list_elem *e;
+  struct child_entry *child;
+  for(e = list_begin(&cur->child_list); e != list_end(&cur->child_list); ){
+    child = list_entry(e, struct child_entry, elem);
+    if(child->is_alive){
+      child->t->parent = NULL;
+      e = list_next(e);
+    } else{
+      e = list_remove(e); //can delete this
+      free(child);
+    }
+  }
+  if(parent == NULL){
+    free(cur->as_child); //如果没爹，就free
+  } else{
+    cur->as_child->is_alive = false;//如果有爹，让爹来free
+    cur->as_child->exit_code = cur->exit_code;
+    cur->as_child->t = NULL;
+    if(cur->as_child->is_waiting_on){
+      sema_up(&cur->as_child->sema);
+    }
+  }
+  //relase all files
+
   list_remove (&thread_current()->allelem);
   thread_current ()->status = THREAD_DYING;
   schedule ();
@@ -730,25 +784,16 @@ init_thread (struct thread *t, const char *name, int priority)
   strlcpy (t->name, name, sizeof t->name);
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
-  t->original_priority = priority;
-  t->trigger_time = TRIGGER_TIME_MAX;
+  t->exit_code = -1; 
+  t->max_mapid = 0;
+    //-1 means not called exit(...) but terminated by other reason
   t->magic = THREAD_MAGIC;
-  t->waiting_lock = NULL;
-  list_init(&t->holding_locks);
-  // printf("[%s]->priority = %d\n", t->name,t->priority);
+  sema_init (&t->sema_exec, 0);
+  list_init (&t->child_list);
+  list_init (&t->file_list);
+  t->exec_file = NULL;
+  t->max_fd = 2;
 
-/**
- * The initial value of recent_cpu is 0 in the
- *  first thread created, or the parent's value
- *  in other new threads.
-*/
-  if(t == initial_thread){
-    t->nice = NICE_DEFAULT;
-    t->recent_cpu = RECENT_CPU_DEFAULT;
-  }else{
-    t->nice = thread_current()->nice;
-    t->recent_cpu = thread_current()->recent_cpu;
-  }
 
   old_level = intr_disable ();
   list_push_back (&all_list, &t->allelem);
@@ -758,7 +803,7 @@ init_thread (struct thread *t, const char *name, int priority)
 /** Allocates a SIZE-byte frame at the top of thread T's stack and
    returns a pointer to the frame's base. */
 static void *
-alloc_frame (struct thread *t, size_t size) 
+thread_alloc_frame (struct thread *t, size_t size) 
 {
   /* Stack data is always allocated in word-size units. */
   ASSERT (is_thread (t));

@@ -26,6 +26,8 @@ test_main (void)
 
   /* Read back via read(). */
   read (handle, buf, strlen (sample));
+  // printf("buf: %s\n", buf);
+  // printf("sample: %s\n", sample);
   CHECK (!memcmp (buf, sample, strlen (sample)),
          "compare read data against written data");
   close (handle);
