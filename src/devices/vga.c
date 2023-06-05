@@ -93,7 +93,7 @@ vga_putc (int c)
       fb[cy][cx][1] = GRAY_ON_BLACK;
       if (++cx >= COL_CNT)
         newline ();
-      break;
+      break;  
     }
 
   /* Update cursor position. */
